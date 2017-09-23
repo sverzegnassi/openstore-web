@@ -32,6 +32,7 @@ const WRONG_PACKAGE = 'The uploaded package does not match the name of the packa
 const APP_NOT_FOUND = 'App not found';
 const BAD_NAMESPACE = 'You package name is for a domain that you do not have access to';
 const EXISTING_VERSION = 'A revision already exists with this version';
+const MALFORMED_LATEST_VERSION = 'Version string is not valid (i.e. \'.latest\')'
 
 function setup(app) {
     app.get('/api/health', function(req, res) {
@@ -383,6 +384,13 @@ function setup(app) {
         if (pkg.id && parseData.name != pkg.id) {
             throw WRONG_PACKAGE;
         }
+        
+        if (pkg.id && pkg.version.indexOf('.latest') > -1) {
+            // Check whether the package id is valid or not. This is a typical
+            // issue with core and system apps.
+            
+            throw MALFORMED_LATEST_VERSION;
+        }
 
         if (pkg.id && pkg.revisions) {
             //Check for existing revisions with the same version string
@@ -503,7 +511,7 @@ function setup(app) {
         }).then((pkg) => {
             helpers.success(res, packages.toJson(pkg, req));
         }).catch((err) => {
-            if (err == PERMISSION_DENIED || err == BAD_FILE || err.indexOf(NEEDS_MANUAL_REVIEW) === 0 || err == MALFORMED_MANIFEST || err == WRONG_PACKAGE || err == EXISTING_VERSION) {
+            if (err == PERMISSION_DENIED || err == BAD_FILE || err.indexOf(NEEDS_MANUAL_REVIEW) === 0 || err == MALFORMED_MANIFEST || err == WRONG_PACKAGE || err == MALFORMED_LATEST_VERSION || err == EXISTING_VERSION) {
                 helpers.error(res, err, 400);
             }
             else {
